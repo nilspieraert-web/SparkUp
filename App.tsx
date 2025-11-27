@@ -11,10 +11,8 @@ import {
 } from '@expo-google-fonts/urbanist';
 import { store, persistor } from './src/store';
 import { ThemeProvider } from './src/contexts/ThemeContext';
+import { AppNavigator } from './src/navigation/AppNavigator';
 import { setUiHydrated } from './src/features/ui/uiSlice';
-import { ScreenContainer } from './src/components/ScreenContainer';
-import { ThemedText } from './src/components/ThemedText';
-import { PrimaryButton } from './src/components/PrimaryButton';
 
 const queryClient = new QueryClient();
 
@@ -26,7 +24,9 @@ const Root: React.FC = () => {
   });
 
   React.useEffect(() => {
-    if (!fontsLoaded) return;
+    if (!fontsLoaded) {
+      return;
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { Text, TextInput } = require('react-native') as { Text: any; TextInput: any };
@@ -56,17 +56,7 @@ const Root: React.FC = () => {
     );
   }
 
-  return (
-    <ScreenContainer>
-      <ThemedText variant="heading" style={styles.title}>
-        SparkUp
-      </ThemedText>
-      <ThemedText style={styles.subtitle}>
-        Basis Expo + theming en reusable UI componenten staan klaar.
-      </ThemedText>
-      <PrimaryButton label="Ga verder" onPress={() => {}} />
-    </ScreenContainer>
-  );
+  return <AppNavigator />;
 };
 
 const App: React.FC = () => {
@@ -96,11 +86,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  title: {
-    marginBottom: 12,
-  },
-  subtitle: {
-    marginBottom: 24,
   },
 });
