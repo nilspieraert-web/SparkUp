@@ -1,2 +1,96 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/A4A7eS8I)
-[![Open in Visual Studio Code](https://classroom.github.com/assets/open-in-vscode-2e0aaae1b6195c2367325f4f02e2d04e9abb55f0b24a779b69b11b9e10269abc.svg)](https://classroom.github.com/online_ide?assignment_repo_id=21362352&assignment_repo_type=AssignmentRepo)
+# SparkUp
+
+A youth movement game logger built with Expo (managed workflow) and TypeScript. Leaders can discover games, log sessions, and track favorites with Firebase-backed persistence.
+
+## Requirements
+
+- Node.js 18+
+- npm or yarn
+- Expo CLI (`npm install -g expo-cli`)
+- Firebase project (Authentication + Firestore)
+
+## Getting Started
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Copy environment template and populate Firebase credentials:
+   ```bash
+   cp .env.example .env
+   ```
+3. Update `app.config.ts` if you need custom bundle identifiers.
+4. Start the Expo development server:
+   ```bash
+   npm run start
+   ```
+5. Open the app in Expo Go or an emulator.
+
+## Firebase Setup
+
+- Enable Email/Password authentication in Firebase Auth.
+- Create Firestore database in native mode.
+- TODO: add Firestore security rules to restrict data access to the authenticated user.
+
+Environment variables used (see `.env.example`):
+
+- `FIREBASE_API_KEY`
+- `FIREBASE_AUTH_DOMAIN`
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_STORAGE_BUCKET`
+- `FIREBASE_MESSAGING_SENDER`
+- `FIREBASE_APP_ID`
+- `APP_BUNDLE_IDENTIFIER`
+- `APP_PACKAGE`
+- `EAS_PROJECT_ID`
+
+## Project Structure
+
+```
+assets/
+  fonts/
+  images/
+src/
+  components/
+  contexts/
+  features/
+  hooks/
+  navigation/
+  screens/
+  services/
+  store/
+  types/
+  utils/
+App.tsx
+```
+
+## Key Libraries
+
+- Expo 54 (managed workflow)
+- React Navigation (bottom tabs + drawer + native stacks)
+- Redux Toolkit + redux-persist
+- Formik + Yup for form management
+- Firebase Auth & Firestore
+- @tanstack/react-query for server-state caching
+
+## Scripts
+
+- `npm run start` – start Expo
+- `npm run lint` – run ESLint
+- `npm run typecheck` – run TypeScript
+
+## Native Features
+
+- Uses `expo-image-picker` for choosing cover photos when creating games.
+- Shares persisted font setup via `@expo-google-fonts/urbanist`.
+
+## Testing & Verification
+
+Before shipping changes, run:
+
+```
+npm run lint
+npm run typecheck
+```
+
+Add platform-specific testing (iOS/Android) for navigation and Firebase flows once keys are configured.
