@@ -24,7 +24,9 @@ const Root: React.FC = () => {
   });
 
   React.useEffect(() => {
-    if (!fontsLoaded) return;
+    if (!fontsLoaded) {
+      return;
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { Text, TextInput } = require('react-native') as { Text: any; TextInput: any };
