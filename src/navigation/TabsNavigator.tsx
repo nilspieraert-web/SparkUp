@@ -6,11 +6,12 @@ import { LogNavigator } from './LogNavigator';
 import { FavoritesNavigator } from './FavoritesNavigator';
 import { ProfileNavigator } from './ProfileNavigator';
 import { TabBarIcon } from '../components/TabBarIcon';
+import { useAppSelector } from '../hooks/useRedux';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
 export const TabsNavigator: React.FC = () => {
-  const favoritesCount = 0;
+  const favoritesCount = useAppSelector((state) => state.favorites.ids.length);
 
   return (
     <Tab.Navigator

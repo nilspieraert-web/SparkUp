@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavigationContainer, DefaultTheme, DarkTheme, Theme as NavigationTheme } from '@react-navigation/native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { AuthNavigator } from './AuthNavigator';
 import { RootDrawerNavigator } from './RootDrawerNavigator';
 import { useTheme } from '../contexts/ThemeContext';
@@ -31,8 +32,20 @@ export const AppNavigator: React.FC = () => {
   );
 
   if (status === 'loading') {
-    return null;
+    return (
+      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
+        <ActivityIndicator color={theme.colors.primary} />
+      </View>
+    );
   }
 
   return <NavigationContainer theme={navigationTheme}>{user ? <RootDrawerNavigator /> : <AuthNavigator />}</NavigationContainer>;
 };
+
+const styles = StyleSheet.create({
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
