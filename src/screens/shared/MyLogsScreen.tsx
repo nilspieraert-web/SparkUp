@@ -1,25 +1,40 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet } from 'react-native';
 import { DrawerScreenProps } from '@react-navigation/drawer';
 import { RootDrawerParamList } from '../../navigation/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ThemedText } from '../../components/ThemedText';
+import { useSessions } from '../../hooks/useSessions';
+import { SessionSummaryCard } from '../../components/SessionSummaryCard';
 
 type Props = DrawerScreenProps<RootDrawerParamList, 'MyLogs'>;
 
-export const MyLogsScreen: React.FC<Props> = () => {
+export const MyLogsScreen: React.FC<Props> = ({ navigation }) => {
+  const { sessions, isLoading } = useSessions();
+
   return (
     <ScreenContainer>
-      <View style={styles.section}>
-        <ThemedText variant="heading">My logs</ThemedText>
-        <ThemedText>Hier komen later gelogde sessies. Nu enkel een placeholder.</ThemedText>
-      </View>
+      <FlatList
+        data={sessions}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <SessionSummaryCard session={item} onPress={(id) => navigation.navigate('Home', { screen: 'LogStack', params: { screen: 'SessionDetail', params: { sessionId: id } } })} />
+        )}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
+          <ThemedText style={styles.emptyText}>{isLoading ? 'Loading...' : 'Nog geen sessies gelogd.'}</ThemedText>
+        }
+      />
     </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  section: {
-    gap: 8,
+  listContent: {
+    paddingBottom: 32,
+  },
+  emptyText: {
+    marginTop: 24,
+    textAlign: 'center',
   },
 });
