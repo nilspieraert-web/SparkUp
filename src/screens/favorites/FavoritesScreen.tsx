@@ -1,28 +1,46 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { FlatList, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { FavoritesStackParamList } from '../../navigation/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ThemedText } from '../../components/ThemedText';
-import { PrimaryButton } from '../../components/PrimaryButton';
+import { useFavorites } from '../../hooks/useFavorites';
+import { useGames } from '../../hooks/useGames';
+import { GameCard } from '../../components/GameCard';
+import { Game } from '../../types/game';
 
 type Props = NativeStackScreenProps<FavoritesStackParamList, 'Favorites'>;
 
 export const FavoritesScreen: React.FC<Props> = ({ navigation }) => {
+  const { favoriteIds, toggleFavorite } = useFavorites();
+  const { games, isLoading } = useGames();
+
+  const favoriteGames = useMemo(() => {
+    const map = new Map(games.map((game) => [game.id, game]));
+    return favoriteIds.map((id) => map.get(id)).filter(Boolean) as Game[];
+  }, [favoriteIds, games]);
+
+  const handlePress = (game: Game) => {
+    navigation.navigate('GameDetail', { gameId: game.id });
+  };
+
   return (
     <ScreenContainer>
-      <View style={styles.section}>
-        <ThemedText variant="heading">Favorites</ThemedText>
-        <ThemedText>Nog geen Firestore-koppeling; dit is een placeholderlijst.</ThemedText>
-      </View>
-      <PrimaryButton label="Bekijk voorbeeld game" onPress={() => navigation.navigate('GameDetail', { gameId: 'demo' })} />
+      <FlatList
+        data={favoriteGames}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <GameCard game={item} onPress={handlePress} onToggleFavorite={toggleFavorite} />}
+        ListEmptyComponent={
+          <ThemedText style={styles.emptyText}>{isLoading ? 'Loading...' : 'Favorite games appear here.'}</ThemedText>
+        }
+      />
     </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  section: {
-    gap: 8,
-    marginBottom: 16,
+  emptyText: {
+    marginTop: 24,
+    textAlign: 'center',
   },
 });
