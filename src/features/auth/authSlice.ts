@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { FirebaseError } from 'firebase/app';
 import type { User } from 'firebase/auth';
-import { getFirebaseAuth, firebaseAuthApi, createUserProfileDocument } from '../../services/firebase';
+import { getFirebaseAuth, firebaseAuthApi, createUserProfileDocument, isFirebaseConfigured } from '../../services/firebase';
 import { fetchUserProfile } from '../../services/firestore';
 import { AuthState, Credentials, ForgotPasswordPayload, RegistrationPayload, UserProfile } from '../../types/auth';
 
@@ -94,6 +94,9 @@ export const listenToAuthChanges = createAsyncThunk<UserProfile | null, void, { 
   'auth/listenToAuthChanges',
   async (_, { rejectWithValue }) => {
     try {
+      if (!isFirebaseConfigured) {
+        return null;
+      }
       const auth = getFirebaseAuth();
       return await new Promise<UserProfile | null>((resolve) => {
         const unsubscribe = auth.onAuthStateChanged(async (user: User | null) => {
