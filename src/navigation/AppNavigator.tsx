@@ -3,6 +3,7 @@ import { NavigationContainer, DefaultTheme, DarkTheme, Theme as NavigationTheme 
 import { AuthNavigator } from './AuthNavigator';
 import { RootDrawerNavigator } from './RootDrawerNavigator';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../hooks/useAuth';
 
 const buildNavigationTheme = (isDark: boolean, colors: ReturnType<typeof useTheme>['theme']['colors']): NavigationTheme => {
   const base = isDark ? DarkTheme : DefaultTheme;
@@ -22,14 +23,16 @@ const buildNavigationTheme = (isDark: boolean, colors: ReturnType<typeof useThem
 
 export const AppNavigator: React.FC = () => {
   const { theme } = useTheme();
-
-  // TODO: replace with real auth status once auth flow is added.
-  const user = true;
+  const { user, status } = useAuth();
 
   const navigationTheme = React.useMemo(
     () => buildNavigationTheme(theme.colorScheme === 'dark', theme.colors),
     [theme],
   );
+
+  if (status === 'loading') {
+    return null;
+  }
 
   return <NavigationContainer theme={navigationTheme}>{user ? <RootDrawerNavigator /> : <AuthNavigator />}</NavigationContainer>;
 };
