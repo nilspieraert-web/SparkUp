@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchGames, defaultGameQueryConstraints } from '../services/firestore';
 import { Game } from '../types/game';
-import type { RootState } from '../store';
+import type { RootState } from '../../store';
 import { useAppSelector } from './useRedux';
 
 const filterGamesClientSide = (games: Game[], filters: RootState['filters']): Game[] => {

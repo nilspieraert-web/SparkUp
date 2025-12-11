@@ -1,11 +1,11 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistReducer, persistStore } from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { authReducer } from '../features/auth/authSlice';
-import { favoritesReducer } from '../features/favorites/favoritesSlice';
-import { filtersReducer } from '../features/filters/filtersSlice';
-import { settingsReducer } from '../features/settings/settingsSlice';
-import { uiReducer } from '../features/ui/uiSlice';
+import { authReducer } from '../src/features/auth/authSlice';
+import { favoritesReducer } from '../src/features/favorites/favoritesSlice';
+import { filtersReducer } from '../src/features/filters/filtersSlice';
+import { settingsReducer } from '../src/features/settings/settingsSlice';
+import { uiReducer } from '../src/features/ui/uiSlice';
 
 const authPersistConfig = {
   key: 'auth',

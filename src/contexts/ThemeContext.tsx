@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { ColorSchemeName, useColorScheme } from 'react-native';
 import { ThemePreference } from '../types/settings';
-import { AppTheme, resolveTheme } from '../utils/theme';
+import { AppTheme, resolveTheme } from '../../utils/theme';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { setTheme as setThemeAction } from '../features/settings/settingsSlice';
 

@@ -1,5 +1,5 @@
 import { ColorSchemeName } from 'react-native';
-import { ThemePreference } from '../types/settings';
+import { ThemePreference } from '../src/types/settings';
 
 export interface AppTheme {
   colorScheme: Exclude<ThemePreference, 'system'>;

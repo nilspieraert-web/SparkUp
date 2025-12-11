@@ -8,7 +8,7 @@ import { Game } from '../../types/game';
 import { GameCard } from '../../components/GameCard';
 import { ThemedText } from '../../components/ThemedText';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
-import type { RootState } from '../../store';
+import type { RootState } from '../../../store';
 import { setFilter } from '../../features/filters/filtersSlice';
 import { setLastSeenFeedPosition } from '../../features/ui/uiSlice';
 import { useTheme } from '../../contexts/ThemeContext';

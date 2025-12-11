@@ -9,7 +9,7 @@ import {
   Urbanist_600SemiBold,
   Urbanist_700Bold,
 } from '@expo-google-fonts/urbanist';
-import { store, persistor } from './src/store';
+import { store, persistor } from './store';
 import { ThemeProvider } from './src/contexts/ThemeContext';
 import { setUiHydrated } from './src/features/ui/uiSlice';
 import { AppNavigator } from './src/navigation/AppNavigator';
