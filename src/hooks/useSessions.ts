@@ -40,3 +40,4 @@ export const useSessions = (): UseSessionsResult => {
     isLoading,
   };
 };
+

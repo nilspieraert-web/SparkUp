@@ -11,11 +11,12 @@ import {
   getReactNativePersistence,
 } from 'firebase/auth';
 import { Firestore, serverTimestamp, doc, setDoc, initializeFirestore, getFirestore } from 'firebase/firestore';
+import type { UserProfile } from '../types/auth';
 import { Platform } from 'react-native';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
-import type { UserProfile } from '../types/auth';
 
-const readEnv = (expoKey: string, legacyKey: string) => process.env[expoKey] ?? process.env[legacyKey] ?? '';
+const readEnv = (expoKey: string, legacyKey: string) =>
+  process.env[expoKey] ?? process.env[legacyKey] ?? '';
 
 const firebaseConfig = {
   apiKey: readEnv('EXPO_PUBLIC_FIREBASE_API_KEY', 'FIREBASE_API_KEY'),
@@ -27,9 +28,13 @@ const firebaseConfig = {
 };
 
 const isPlaceholderValue = (value?: string) => {
-  if (!value) return true;
+  if (!value) {
+    return true;
+  }
   const normalized = value.trim().toLowerCase();
-  if (!normalized) return true;
+  if (!normalized) {
+    return true;
+  }
   return normalized.includes('your') || normalized.includes('jouw') || normalized.includes('replace');
 };
 
@@ -48,7 +53,7 @@ let db: Firestore | null = null;
 
 const ensureFirebase = () => {
   if (!isFirebaseConfigured) {
-    throw new Error('Firebase is niet geconfigureerd. Vul de EXPO_PUBLIC_FIREBASE_* variabelen in om cloud sync te gebruiken.');
+    throw new Error('Firebase is not configured. Populate the EXPO_PUBLIC_FIREBASE_* variables to enable cloud sync.');
   }
   if (!app) {
     app = getApps().length ? getApps()[0]! : initializeApp(firebaseConfig);
@@ -63,25 +68,29 @@ const ensureFirebase = () => {
           persistence: getReactNativePersistence(ReactNativeAsyncStorage),
         });
       } catch {
+        // If auth is already initialized (fast refresh), fall back to the default getter.
         auth = getAuth(firebaseApp);
       }
     }
   }
   if (!db) {
+    // In React Native environments WebChannel can be blocked; opt into long polling automatically.
     try {
       db = initializeFirestore(firebaseApp, {
         experimentalForceLongPolling: true,
       });
     } catch {
+      // Fast refresh may already have an instance; fall back to the cached singleton.
       db = getFirestore(firebaseApp);
     }
   }
   return { app: app!, auth: auth!, db: db! };
 };
 
-export const getFirebaseAuth = () => auth ?? ensureFirebase().auth;
-export const getFirestoreDb = () => db ?? ensureFirebase().db;
+export const getFirebaseAuth = () => (auth ?? ensureFirebase().auth);
+export const getFirestoreDb = () => (db ?? ensureFirebase().db);
 
+// ---------- Auth API ----------
 export const firebaseAuthApi = {
   signIn: async (email: string, password: string) => {
     const a = getFirebaseAuth();
@@ -91,9 +100,7 @@ export const firebaseAuthApi = {
   signUp: async (displayName: string, email: string, password: string) => {
     const a = getFirebaseAuth();
     const { user } = await createUserWithEmailAndPassword(a, email, password);
-    if (displayName) {
-      await updateProfile(user, { displayName });
-    }
+    if (displayName) await updateProfile(user, { displayName });
     return user;
   },
   sendPasswordReset: async (email: string) => {
@@ -106,6 +113,7 @@ export const firebaseAuthApi = {
   },
 };
 
+// ---------- Firestore helpers ----------
 export const createUserProfileDocument = async (uid: string, data: UserProfile) => {
   const d = getFirestoreDb();
   const ref = doc(d, 'users', uid);

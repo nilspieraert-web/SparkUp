@@ -11,7 +11,7 @@ import { ThemedText } from '../../components/ThemedText';
 import { FormTextField } from '../../components/forms/FormTextField';
 import { FormSwitchField } from '../../components/forms/FormSwitchField';
 import { PrimaryButton } from '../../components/PrimaryButton';
-import { THEMES } from '../../../utils/constants';
+import { THEMES } from '../../utils/constants';
 import { createGame, fetchGameById, updateGame } from '../../services/firestore';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -40,19 +40,19 @@ const REQUIRED_FIELD_KEYS: Array<keyof Pick<GameEditorValues, 'title' | 'theme' 
 ];
 
 const REQUIRED_FIELD_LABELS: Record<typeof REQUIRED_FIELD_KEYS[number], string> = {
-  title: 'Titel',
-  theme: 'Thema',
-  description: 'Beschrijving',
-  durationMins: 'Duur',
-  minAge: 'Minimum leeftijd',
-  maxAge: 'Maximum leeftijd',
+  title: 'Title',
+  theme: 'Theme',
+  description: 'Description',
+  durationMins: 'Duration',
+  minAge: 'Minimum age',
+  maxAge: 'Maximum age',
 };
 
 const numericString = (min: number, max: number, label: string) =>
   Yup.string()
-    .required(`${label} is verplicht`)
-    .matches(/^\d+$/, 'Enkel cijfers')
-    .test('range', `Tussen ${min} en ${max}`, (value) => {
+    .required(`${label} is required`)
+    .matches(/^\d+$/, 'Numbers only')
+    .test('range', `Between ${min} and ${max}`, (value) => {
       if (!value) {
         return false;
       }
@@ -61,12 +61,12 @@ const numericString = (min: number, max: number, label: string) =>
     });
 
 const validationSchema = Yup.object<GameEditorValues>({
-  title: Yup.string().trim().required('Titel is verplicht').max(80, 'Hou het kort'),
-  theme: Yup.string().trim().required('Kies een thema'),
-  description: Yup.string().trim().required('Beschrijf het spel').max(1000, 'Beschrijving te lang'),
-  durationMins: numericString(1, 240, 'Duur'),
-  minAge: numericString(4, 18, 'Minimum leeftijd'),
-  maxAge: numericString(4, 18, 'Maximum leeftijd').test('age-order', 'Max leeftijd moet ≥ min leeftijd zijn', function (value) {
+  title: Yup.string().trim().required('Title is required').max(80, 'Keep it short'),
+  theme: Yup.string().trim().required('Pick a theme'),
+  description: Yup.string().trim().required('Describe the game').max(1000, 'Description too long'),
+  durationMins: numericString(1, 240, 'Duration'),
+  minAge: numericString(4, 18, 'Minimum age'),
+  maxAge: numericString(4, 18, 'Maximum age').test('age-order', 'Maximum age must be greater than or equal to minimum age', function (value) {
     if (!value) {
       return false;
     }
@@ -78,7 +78,7 @@ const validationSchema = Yup.object<GameEditorValues>({
   outdoorAllowed: Yup.boolean().required(),
   coverPhotoUrl: Yup.string()
     .optional()
-    .test('valid-image-uri', 'Kies een geldige foto (file/http)', (value) => {
+    .test('valid-image-uri', 'Choose a valid photo from your device or the web', (value) => {
       if (!value) {
         return true;
       }
@@ -145,7 +145,7 @@ export const GameEditorScreen: React.FC<Props> = ({ route, navigation }) => {
 
     const openLibrary = async () => {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'] as ImagePicker.MediaType[],
         allowsEditing: true,
         quality: 0.8,
       });
@@ -161,15 +161,24 @@ export const GameEditorScreen: React.FC<Props> = ({ route, navigation }) => {
     };
 
     if (libraryStatus !== ImagePicker.PermissionStatus.GRANTED && cameraStatus !== ImagePicker.PermissionStatus.GRANTED) {
-      Alert.alert('Geen toegang', 'Geef camera of fotobibliotheek toegang om een cover toe te voegen.');
       return;
     }
 
     if (libraryStatus === ImagePicker.PermissionStatus.GRANTED && cameraStatus === ImagePicker.PermissionStatus.GRANTED) {
-      Alert.alert('Cover photo', 'Hoe wil je een foto toevoegen?', [
-        { text: 'Foto nemen', onPress: () => void openCamera() },
-        { text: 'Kies uit bibliotheek', onPress: () => void openLibrary() },
-        { text: 'Annuleer', style: 'cancel' },
+      Alert.alert('Cover photo', 'Choose how to add a cover image', [
+        {
+          text: 'Take photo',
+          onPress: () => {
+            void openCamera();
+          },
+        },
+        {
+          text: 'Choose from library',
+          onPress: () => {
+            void openLibrary();
+          },
+        },
+        { text: 'Cancel', style: 'cancel' },
       ]);
       return;
     }
@@ -187,7 +196,7 @@ export const GameEditorScreen: React.FC<Props> = ({ route, navigation }) => {
   if (!user) {
     return (
       <ScreenContainer>
-        <ThemedText>Log in om games te beheren.</ThemedText>
+        <ThemedText>Sign in to manage games.</ThemedText>
       </ScreenContainer>
     );
   }
@@ -233,56 +242,79 @@ export const GameEditorScreen: React.FC<Props> = ({ route, navigation }) => {
             void queryClient.invalidateQueries({ queryKey: ['games'] });
             navigation.goBack();
           } catch (error) {
-            Alert.alert('Opslaan mislukt', 'We konden het spel niet opslaan. Probeer opnieuw.');
+            console.error('Failed to save game', error);
+            Alert.alert('Opslaan mislukt', 'We konden het spel niet opslaan. Controleer je verbinding en probeer opnieuw.');
           } finally {
             helpers.setSubmitting(false);
           }
         }}
       >
         {({ handleSubmit, isSubmitting, isValid, setFieldValue, values, errors }) => {
-          const validationMessages = REQUIRED_FIELD_KEYS.map((field) => {
-            const message = errors[field];
-            if (typeof message !== 'string') {
-              return null;
-            }
-            return {
-              field,
-              message,
-            };
-          }).filter((entry): entry is { field: typeof REQUIRED_FIELD_KEYS[number]; message: string } => entry !== null);
+          const validationMessages = REQUIRED_FIELD_KEYS
+            .map((field) => {
+              const message = errors[field];
+              if (typeof message !== 'string') {
+                return null;
+              }
+              return {
+                field,
+                message,
+              };
+            })
+            .filter((entry): entry is { field: typeof REQUIRED_FIELD_KEYS[number]; message: string } => entry !== null);
 
           return (
             <View>
-              <FormTextField name="title" label="Titel" placeholder="Game titel" />
-              <FormTextField name="theme" label="Thema" placeholder={`Bijv: ${THEMES.join(', ')}`} />
-              <FormTextField name="description" label="Beschrijving" placeholder="Leg uit hoe het spel werkt..." multiline />
-              <FormTextField name="durationMins" label="Duur (minuten)" keyboardType="numeric" />
+              <FormTextField name="title" label="Title" placeholder="Game title" />
+              <FormTextField name="theme" label="Theme" placeholder={`Try one of: ${THEMES.join(', ')}`} />
+              <FormTextField
+                name="description"
+                label="Description"
+                placeholder="Explain how to run the game..."
+                multiline
+              />
+              <FormTextField
+                name="durationMins"
+                label="Duration (minutes)"
+                keyboardType="numeric"
+              />
               <View style={styles.row}>
                 <View style={styles.half}>
-                  <FormTextField name="minAge" label="Min leeftijd" keyboardType="numeric" />
+                  <FormTextField name="minAge" label="Min age" keyboardType="numeric" />
                 </View>
                 <View style={styles.half}>
-                  <FormTextField name="maxAge" label="Max leeftijd" keyboardType="numeric" />
+                  <FormTextField name="maxAge" label="Max age" keyboardType="numeric" />
                 </View>
               </View>
-              <FormSwitchField name="indoorAllowed" label="Indoor geschikt" />
-              <FormSwitchField name="outdoorAllowed" label="Outdoor geschikt" />
+              <FormSwitchField name="indoorAllowed" label="Indoor friendly" />
+              <FormSwitchField name="outdoorAllowed" label="Outdoor friendly" />
 
-              {values.coverPhotoUrl ? <Image source={{ uri: values.coverPhotoUrl }} style={styles.cover} /> : null}
+              {values.coverPhotoUrl ? (
+                <Image source={{ uri: values.coverPhotoUrl }} style={styles.cover} />
+              ) : null}
 
               <PrimaryButton
-                label={values.coverPhotoUrl ? 'Wijzig cover photo' : 'Voeg cover photo toe'}
+                label={values.coverPhotoUrl ? 'Change cover photo' : 'Add cover photo'}
                 onPress={() => pickImage((field, value) => setFieldValue(field, value))}
                 style={styles.button}
               />
 
               {!isValid && validationMessages.length > 0 ? (
-                <View style={[styles.validationContainer, { borderColor: theme.colors.danger, backgroundColor: theme.colors.card }]}>
+                <View
+                  style={[
+                    styles.validationContainer,
+                    { borderColor: theme.colors.danger, backgroundColor: theme.colors.card },
+                  ]}
+                >
                   <ThemedText variant="caption" style={[styles.validationTitle, { color: theme.colors.danger }]}>
-                    Vul deze velden in om op te slaan:
+                    Complete these fields to enable the button:
                   </ThemedText>
                   {validationMessages.map(({ field, message }) => (
-                    <ThemedText variant="caption" key={field} style={[styles.validationMessage, { color: theme.colors.danger }]}>
+                    <ThemedText
+                      variant="caption"
+                      key={field}
+                      style={[styles.validationMessage, { color: theme.colors.danger }]}
+                    >
                       - {REQUIRED_FIELD_LABELS[field]}: {message}
                     </ThemedText>
                   ))}
@@ -290,7 +322,7 @@ export const GameEditorScreen: React.FC<Props> = ({ route, navigation }) => {
               ) : null}
 
               <PrimaryButton
-                label={gameId ? 'Update game' : 'Maak game'}
+                label={gameId ? 'Update game' : 'Create game'}
                 onPress={handleSubmit}
                 disabled={!isValid || isSubmitting}
               />

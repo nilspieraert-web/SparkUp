@@ -36,7 +36,11 @@ export const SessionSummaryCard: React.FC<SessionSummaryCardProps> = ({ session,
     );
   }
 
-  return <View style={commonStyle}>{content}</View>;
+  return (
+    <View style={commonStyle}>
+      {content}
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({

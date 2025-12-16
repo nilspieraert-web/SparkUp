@@ -1,13 +1,13 @@
 import React from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { AuthStackParamList } from '../../navigation/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ThemedText } from '../../components/ThemedText';
+import { FormTextField } from '../../components/forms/FormTextField';
 import { PrimaryButton } from '../../components/PrimaryButton';
-import { useTheme } from '../../contexts/ThemeContext';
+import { AuthStackParamList } from '../../navigation/types';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { loginWithEmail } from '../../features/auth/authSlice';
 
@@ -19,12 +19,11 @@ interface LoginFormValues {
 }
 
 const validationSchema = Yup.object<LoginFormValues>({
-  email: Yup.string().email('Geef een geldige email').required('Email is verplicht'),
-  password: Yup.string().min(6, 'Minstens 6 tekens').required('Wachtwoord is verplicht'),
+  email: Yup.string().email('Enter a valid email').required('Email is required'),
+  password: Yup.string().min(6, 'Minimum 6 characters').required('Password is required'),
 });
 
 export const LoginScreen: React.FC<Props> = ({ navigation }) => {
-  const { theme } = useTheme();
   const dispatch = useAppDispatch();
   const status = useAppSelector((state) => state.auth.status);
   const errorMessage = useAppSelector((state) => state.auth.errorMessage);
@@ -32,7 +31,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <ScreenContainer scrollable>
       <ThemedText variant="heading" style={styles.title}>
-        Log in
+        Welcome back
       </ThemedText>
 
       <Formik<LoginFormValues>
@@ -45,53 +44,30 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
           }
         }}
       >
-        {({ handleChange, handleBlur, values, errors, touched, handleSubmit, isSubmitting, isValid }) => (
-          <View style={styles.form}>
-            <ThemedText variant="subheading">Email</ThemedText>
-            <TextInput
-              value={values.email}
-              onChangeText={handleChange('email')}
-              onBlur={handleBlur('email')}
+        {({ handleSubmit, isSubmitting, isValid }) => (
+          <View>
+            <FormTextField
+              name="email"
+              label="Email"
               placeholder="leader@example.com"
               autoCapitalize="none"
               keyboardType="email-address"
-              style={[
-                styles.input,
-                {
-                  borderColor: theme.colors.border,
-                  color: theme.colors.text,
-                  backgroundColor: theme.colors.card,
-                },
-              ]}
-              placeholderTextColor={theme.colors.muted}
             />
-            {touched.email && errors.email ? <ThemedText style={styles.error}>{errors.email}</ThemedText> : null}
-
-            <ThemedText variant="subheading" style={styles.fieldLabel}>
-              Wachtwoord
-            </ThemedText>
-            <TextInput
-              value={values.password}
-              onChangeText={handleChange('password')}
-              onBlur={handleBlur('password')}
+            <FormTextField
+              name="password"
+              label="Password"
               placeholder="••••••••"
               secureTextEntry
-              style={[
-                styles.input,
-                {
-                  borderColor: theme.colors.border,
-                  color: theme.colors.text,
-                  backgroundColor: theme.colors.card,
-                },
-              ]}
-              placeholderTextColor={theme.colors.muted}
             />
-            {touched.password && errors.password ? <ThemedText style={styles.error}>{errors.password}</ThemedText> : null}
 
-            {errorMessage ? <ThemedText style={styles.error}>{errorMessage}</ThemedText> : null}
+            {errorMessage ? (
+              <ThemedText style={styles.error}>
+                {errorMessage}
+              </ThemedText>
+            ) : null}
 
             <PrimaryButton
-              label="Log in"
+              label="Log In"
               onPress={handleSubmit}
               disabled={!isValid || isSubmitting || status === 'loading'}
             />
@@ -100,13 +76,13 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
       </Formik>
 
       <PrimaryButton
-        label="Wachtwoord vergeten?"
+        label="Forgot password?"
         onPress={() => navigation.navigate('ForgotPassword')}
         style={styles.ghostButton}
         textStyle={styles.ghostButtonText}
       />
       <PrimaryButton
-        label="Nog geen account? Registreren"
+        label="Need an account? Register"
         onPress={() => navigation.navigate('Register')}
         style={styles.ghostButton}
         textStyle={styles.ghostButtonText}
@@ -119,22 +95,8 @@ const styles = StyleSheet.create({
   title: {
     marginBottom: 24,
   },
-  form: {
-    gap: 8,
-  },
-  fieldLabel: {
-    marginTop: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontFamily: 'Urbanist_400Regular',
-  },
   error: {
-    color: '#DC2626',
-    marginBottom: 4,
+    marginBottom: 12,
   },
   ghostButton: {
     backgroundColor: 'transparent',

@@ -36,13 +36,21 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
           </ThemedText>
         </View>
       ) : (
-        <ThemedText>Log in om je profiel te beheren.</ThemedText>
+        <ThemedText>Sign in to manage your profile.</ThemedText>
       )}
 
-      <PrimaryButton label={`Thema: ${preference}`} onPress={cycleTheme} style={styles.button} />
-      <PrimaryButton label="Nieuw spel" onPress={() => navigation.navigate('GameEditor', {})} style={styles.button} />
       <PrimaryButton
-        label="Uitloggen"
+        label={`Theme preference: ${preference}`}
+        onPress={cycleTheme}
+        style={styles.button}
+      />
+      <PrimaryButton
+        label="Create a game"
+        onPress={() => navigation.navigate('GameEditor', {})}
+        style={styles.button}
+      />
+      <PrimaryButton
+        label="Sign out"
         onPress={() => dispatch(signOutUser())}
         style={[styles.signOut, { backgroundColor: theme.colors.danger }]}
       />
@@ -70,3 +78,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#DC2626',
   },
 });
+
+
+

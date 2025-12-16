@@ -9,10 +9,10 @@ import {
   Urbanist_600SemiBold,
   Urbanist_700Bold,
 } from '@expo-google-fonts/urbanist';
-import { store, persistor } from './store';
+import { store, persistor } from './src/store';
 import { ThemeProvider } from './src/contexts/ThemeContext';
-import { setUiHydrated } from './src/features/ui/uiSlice';
 import { AppNavigator } from './src/navigation/AppNavigator';
+import { setUiHydrated } from './src/features/ui/uiSlice';
 
 const queryClient = new QueryClient();
 
@@ -24,7 +24,9 @@ const Root: React.FC = () => {
   });
 
   React.useEffect(() => {
-    if (!fontsLoaded) return;
+    if (!fontsLoaded) {
+      return;
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { Text, TextInput } = require('react-native') as { Text: any; TextInput: any };

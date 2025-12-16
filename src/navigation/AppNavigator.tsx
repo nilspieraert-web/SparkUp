@@ -1,10 +1,10 @@
 import React from 'react';
 import { NavigationContainer, DefaultTheme, DarkTheme, Theme as NavigationTheme } from '@react-navigation/native';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { AuthNavigator } from './AuthNavigator';
 import { RootDrawerNavigator } from './RootDrawerNavigator';
-import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../contexts/ThemeContext';
 
 const buildNavigationTheme = (isDark: boolean, colors: ReturnType<typeof useTheme>['theme']['colors']): NavigationTheme => {
   const base = isDark ? DarkTheme : DefaultTheme;
@@ -23,8 +23,8 @@ const buildNavigationTheme = (isDark: boolean, colors: ReturnType<typeof useThem
 };
 
 export const AppNavigator: React.FC = () => {
-  const { theme } = useTheme();
   const { user, status } = useAuth();
+  const { theme } = useTheme();
 
   const navigationTheme = React.useMemo(
     () => buildNavigationTheme(theme.colorScheme === 'dark', theme.colors),
@@ -39,7 +39,11 @@ export const AppNavigator: React.FC = () => {
     );
   }
 
-  return <NavigationContainer theme={navigationTheme}>{user ? <RootDrawerNavigator /> : <AuthNavigator />}</NavigationContainer>;
+  return (
+    <NavigationContainer theme={navigationTheme}>
+      {user ? <RootDrawerNavigator /> : <AuthNavigator />}
+    </NavigationContainer>
+  );
 };
 
 const styles = StyleSheet.create({

@@ -16,28 +16,22 @@ export const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
     <ScreenContainer scrollable>
       <View style={[styles.hero, { backgroundColor: theme.colors.secondary }]}>
         <View style={[styles.heroBadge, { backgroundColor: theme.colors.primary }]} />
-        <ThemedText variant="subheading" style={[styles.heroText, { color: theme.colors.text }]}>
-          Plan, speel en log je activiteiten met één app.
+        <ThemedText variant="subheading" style={[styles.heroText, { color: theme.colors.text }]} >
+          Plan, play, and record every activity with confidence.
         </ThemedText>
       </View>
       <ThemedText variant="heading" style={styles.title}>
-        SparkUp
+        Spark up every gathering
       </ThemedText>
       <ThemedText style={styles.subtitle}>
-        Ontdek spellen, bewaar favorieten en hou je sessies bij. Log in of maak een account om te starten.
+        Discover tried-and-true games, keep track of what works, and keep your scouts buzzing.
       </ThemedText>
-      <PrimaryButton label="Log in" onPress={() => navigation.navigate('Login')} />
+      <PrimaryButton label="Log In" onPress={() => navigation.navigate('Login')} />
       <PrimaryButton
-        label="Account aanmaken"
+        label="Create an account"
         onPress={() => navigation.navigate('Register')}
         style={styles.secondaryButton}
         textStyle={styles.secondaryButtonText}
-      />
-      <PrimaryButton
-        label="Wachtwoord vergeten"
-        onPress={() => navigation.navigate('ForgotPassword')}
-        style={styles.ghostButton}
-        textStyle={styles.ghostButtonText}
       />
     </ScreenContainer>
   );
@@ -46,7 +40,7 @@ export const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   hero: {
     width: '100%',
-    height: 220,
+    height: 240,
     marginBottom: 24,
     borderRadius: 24,
     padding: 24,
@@ -70,7 +64,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   subtitle: {
-    marginBottom: 24,
+    marginBottom: 32,
   },
   secondaryButton: {
     marginTop: 12,
@@ -79,11 +73,8 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     fontWeight: '600',
   },
-  ghostButton: {
-    backgroundColor: 'transparent',
-    marginTop: 12,
-  },
-  ghostButtonText: {
-    color: '#2563EB',
-  },
 });
+
+
+
+

@@ -29,9 +29,13 @@ export const FavoritesScreen: React.FC<Props> = ({ navigation }) => {
       <FlatList
         data={favoriteGames}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <GameCard game={item} onPress={handlePress} onToggleFavorite={toggleFavorite} />}
+        renderItem={({ item }) => (
+          <GameCard game={item} onPress={handlePress} onToggleFavorite={toggleFavorite} />
+        )}
         ListEmptyComponent={
-          <ThemedText style={styles.emptyText}>{isLoading ? 'Loading...' : 'Favorite games appear here.'}</ThemedText>
+          <ThemedText style={styles.emptyText}>
+            {isLoading ? 'Loading...' : 'Favorite games will appear here.'}
+          </ThemedText>
         }
       />
     </ScreenContainer>
@@ -44,3 +48,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+

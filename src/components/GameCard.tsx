@@ -1,6 +1,5 @@
 import React from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { Game } from '../types/game';
 import { ThemedText } from './ThemedText';
 import { useTheme } from '../contexts/ThemeContext';
@@ -43,15 +42,13 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onPress, onToggleFavor
             accessibilityRole="button"
             accessibilityLabel={isFavorite ? 'Remove from favorites' : 'Mark as favorite'}
           >
-            <Ionicons
-              name={isFavorite ? 'heart' : 'heart-outline'}
-              size={22}
-              color={isFavorite ? theme.colors.primary : theme.colors.muted}
-            />
+            <ThemedText variant="heading" style={{ color: isFavorite ? theme.colors.primary : theme.colors.muted }}>
+              {isFavorite ? '★' : '☆'}
+            </ThemedText>
           </Pressable>
         </View>
         <ThemedText variant="subheading" style={{ color: theme.colors.muted }}>
-          {game.theme} · {game.durationMins} mins
+          {game.theme} • {game.durationMins} mins
         </ThemedText>
         <ThemedText numberOfLines={2}>{game.description}</ThemedText>
       </View>

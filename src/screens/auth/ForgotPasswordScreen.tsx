@@ -1,13 +1,13 @@
 import React from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { AuthStackParamList } from '../../navigation/types';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { ThemedText } from '../../components/ThemedText';
+import { FormTextField } from '../../components/forms/FormTextField';
 import { PrimaryButton } from '../../components/PrimaryButton';
-import { useTheme } from '../../contexts/ThemeContext';
+import { AuthStackParamList } from '../../navigation/types';
 import { sendPasswordReset } from '../../features/auth/authSlice';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 
@@ -18,11 +18,10 @@ interface ForgotPasswordValues {
 }
 
 const validationSchema = Yup.object<ForgotPasswordValues>({
-  email: Yup.string().email('Geef een geldige email').required('Email is verplicht'),
+  email: Yup.string().email('Enter a valid email').required('Email is required'),
 });
 
 export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
-  const { theme } = useTheme();
   const dispatch = useAppDispatch();
   const status = useAppSelector((state) => state.auth.status);
   const [submitted, setSubmitted] = React.useState<boolean>(false);
@@ -30,9 +29,11 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <ScreenContainer scrollable>
       <ThemedText variant="heading" style={styles.title}>
-        Reset je wachtwoord
+        Reset your password
       </ThemedText>
-      <ThemedText style={styles.description}>Geef het emailadres van je account. Je krijgt een reset-link.</ThemedText>
+      <ThemedText style={styles.description}>
+        Enter the email tied to your account and we will send you a reset link.
+      </ThemedText>
 
       <Formik<ForgotPasswordValues>
         initialValues={{ email: '' }}
@@ -46,36 +47,24 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
           }
         }}
       >
-        {({ handleChange, handleBlur, values, errors, touched, handleSubmit, isSubmitting, isValid }) => (
-          <View style={styles.form}>
-            <ThemedText variant="subheading">Email</ThemedText>
-            <TextInput
-              value={values.email}
-              onChangeText={handleChange('email')}
-              onBlur={handleBlur('email')}
+        {({ handleSubmit, isSubmitting, isValid }) => (
+          <View>
+            <FormTextField
+              name="email"
+              label="Email"
               placeholder="leader@example.com"
               autoCapitalize="none"
               keyboardType="email-address"
-              style={[
-                styles.input,
-                {
-                  borderColor: theme.colors.border,
-                  color: theme.colors.text,
-                  backgroundColor: theme.colors.card,
-                },
-              ]}
-              placeholderTextColor={theme.colors.muted}
             />
-            {touched.email && errors.email ? <ThemedText style={styles.error}>{errors.email}</ThemedText> : null}
 
             {submitted ? (
               <ThemedText style={styles.feedback}>
-                Als dit emailadres bestaat, ontvang je zo meteen een reset-link.
+                If the email exists, you will receive reset instructions shortly.
               </ThemedText>
             ) : null}
 
             <PrimaryButton
-              label="Stuur reset-link"
+              label="Send reset link"
               onPress={handleSubmit}
               disabled={!isValid || isSubmitting || status === 'loading'}
             />
@@ -84,7 +73,7 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
       </Formik>
 
       <PrimaryButton
-        label="Terug naar login"
+        label="Back to login"
         onPress={() => navigation.navigate('Login')}
         style={styles.ghostButton}
         textStyle={styles.ghostButtonText}
@@ -98,24 +87,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   description: {
-    marginBottom: 20,
-  },
-  form: {
-    gap: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontFamily: 'Urbanist_400Regular',
-  },
-  error: {
-    color: '#DC2626',
-    marginBottom: 4,
+    marginBottom: 24,
   },
   feedback: {
-    marginBottom: 8,
+    marginBottom: 12,
   },
   ghostButton: {
     backgroundColor: 'transparent',

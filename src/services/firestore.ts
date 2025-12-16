@@ -13,13 +13,13 @@ import {
   QueryConstraint,
   FirestoreDataConverter,
   WithFieldValue,
-} from 'firebase/firestore';
-import { Game } from '../types/game';
-import { SessionLog } from '../types/session';
-import { UserProfile } from '../types/auth';
-import { getFirestoreDb } from './firebase';
+} from "firebase/firestore";
+import { Game } from "../types/game";
+import { SessionLog } from "../types/session";
+import { UserProfile } from "../types/auth";
+import { getFirestoreDb } from "./firebase";
 
-export interface CreateGameInput extends Omit<Game, 'id' | 'createdAt' | 'updatedAt' | 'createdBy'> {
+export interface CreateGameInput extends Omit<Game, "id" | "createdAt" | "updatedAt" | "createdBy"> {
   createdBy: string;
 }
 
@@ -27,24 +27,24 @@ export interface UpdateGameInput extends Partial<CreateGameInput> {
   id: string;
 }
 
-export type CreateSessionInput = Omit<SessionLog, 'id' | 'createdAt'>;
+export interface CreateSessionInput extends Omit<SessionLog, "id" | "createdAt"> {}
 
 const getDb = () => getFirestoreDb();
 
 type FirestoreTimestampLike = { toMillis?: () => number };
 
 const normalizeTimestamp = (value: unknown): number => {
-  if (typeof value === 'number') {
+  if (typeof value === "number") {
     return value;
   }
-  if (value && typeof (value as FirestoreTimestampLike).toMillis === 'function') {
+  if (value && typeof (value as FirestoreTimestampLike).toMillis === "function") {
     return (value as FirestoreTimestampLike).toMillis!();
   }
   return Date.now();
 };
 
 const gameConverter: FirestoreDataConverter<Game> = {
-  toFirestore(game: WithFieldValue<Omit<Game, 'id'>>) {
+  toFirestore(game: WithFieldValue<Omit<Game, "id">>) {
     return game;
   },
   fromFirestore(snapshot, options) {
@@ -53,11 +53,11 @@ const gameConverter: FirestoreDataConverter<Game> = {
       id: snapshot.id,
       title: data.title as string,
       theme: data.theme as string,
-      ageRange: data.ageRange as Game['ageRange'],
+      ageRange: data.ageRange as Game["ageRange"],
       durationMins: data.durationMins as number,
       indoorAllowed: Boolean(data.indoorAllowed),
       outdoorAllowed: Boolean(data.outdoorAllowed),
-      description: (data.description as string) ?? '',
+      description: (data.description as string) ?? "",
       coverPhotoUrl: data.coverPhotoUrl as string | null | undefined,
       createdBy: data.createdBy as string,
       createdAt: normalizeTimestamp((data as { createdAt?: unknown }).createdAt),
@@ -67,7 +67,7 @@ const gameConverter: FirestoreDataConverter<Game> = {
 };
 
 const sessionConverter: FirestoreDataConverter<SessionLog> = {
-  toFirestore(session: WithFieldValue<Omit<SessionLog, 'id'>>) {
+  toFirestore(session: WithFieldValue<Omit<SessionLog, "id">>) {
     return session;
   },
   fromFirestore(snapshot, options) {
@@ -76,11 +76,11 @@ const sessionConverter: FirestoreDataConverter<SessionLog> = {
       id: snapshot.id,
       gameId: data.gameId as string,
       playedAt: normalizeTimestamp((data as { playedAt?: unknown }).playedAt),
-      context: data.context as SessionLog['context'],
-      funRating: (data.funRating as SessionLog['funRating']) ?? 3,
-      engagementRating: (data.engagementRating as SessionLog['engagementRating']) ?? 3,
+      context: data.context as SessionLog["context"],
+      funRating: (data.funRating as SessionLog["funRating"]) ?? 3,
+      engagementRating: (data.engagementRating as SessionLog["engagementRating"]) ?? 3,
       kidsAllJoined: Boolean(data.kidsAllJoined),
-      notes: (data.notes as string) ?? '',
+      notes: (data.notes as string) ?? "",
       createdBy: data.createdBy as string,
       createdAt: normalizeTimestamp((data as { createdAt?: unknown }).createdAt),
     } satisfies SessionLog;
@@ -88,7 +88,7 @@ const sessionConverter: FirestoreDataConverter<SessionLog> = {
 };
 
 const profileConverter: FirestoreDataConverter<UserProfile> = {
-  toFirestore(profile: WithFieldValue<Omit<UserProfile, 'id'>>) {
+  toFirestore(profile: WithFieldValue<Omit<UserProfile, "id">>) {
     return profile;
   },
   fromFirestore(snapshot, options) {
@@ -97,7 +97,7 @@ const profileConverter: FirestoreDataConverter<UserProfile> = {
       id: snapshot.id,
       displayName: data.displayName as string,
       email: data.email as string,
-      role: data.role as UserProfile['role'],
+      role: data.role as UserProfile["role"],
       avatarUrl: data.avatarUrl as string | undefined,
       createdAt: normalizeTimestamp((data as { createdAt?: unknown }).createdAt),
     } satisfies UserProfile;
@@ -105,12 +105,15 @@ const profileConverter: FirestoreDataConverter<UserProfile> = {
 };
 
 export const firestoreRefs = {
-  games: () => collection(getDb(), 'games').withConverter(gameConverter),
-  sessions: () => collection(getDb(), 'sessions').withConverter(sessionConverter),
-  users: () => collection(getDb(), 'users').withConverter(profileConverter),
+  games: () => collection(getDb(), "games").withConverter(gameConverter),
+  sessions: () => collection(getDb(), "sessions").withConverter(sessionConverter),
+  users: () => collection(getDb(), "users").withConverter(profileConverter),
 };
 
-export const subscribeToGames = (constraints: QueryConstraint[], callback: (games: Game[]) => void) => {
+export const subscribeToGames = (
+  constraints: QueryConstraint[],
+  callback: (games: Game[]) => void,
+) => {
   const q = query(firestoreRefs.games(), ...constraints);
   return onSnapshot(q, (snapshot) => {
     callback(snapshot.docs.map((docSnapshot) => docSnapshot.data()));
@@ -124,7 +127,7 @@ export const fetchGames = async (constraints: QueryConstraint[] = []): Promise<G
 };
 
 export const fetchGameById = async (gameId: string): Promise<Game | null> => {
-  const ref = doc(getDb(), 'games', gameId).withConverter(gameConverter);
+  const ref = doc(getDb(), "games", gameId).withConverter(gameConverter);
   const snapshot = await getDoc(ref);
   if (!snapshot.exists()) {
     return null;
@@ -133,7 +136,7 @@ export const fetchGameById = async (gameId: string): Promise<Game | null> => {
 };
 
 export const fetchSessionById = async (sessionId: string): Promise<SessionLog | null> => {
-  const ref = doc(getDb(), 'sessions', sessionId).withConverter(sessionConverter);
+  const ref = doc(getDb(), "sessions", sessionId).withConverter(sessionConverter);
   const snapshot = await getDoc(ref);
   if (!snapshot.exists()) {
     return null;
@@ -142,7 +145,7 @@ export const fetchSessionById = async (sessionId: string): Promise<SessionLog | 
 };
 
 export const createGame = async (input: CreateGameInput): Promise<string> => {
-  const ref = await addDoc(collection(getDb(), 'games'), {
+  const ref = await addDoc(collection(getDb(), "games"), {
     ...input,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -159,14 +162,14 @@ export const updateGame = async (input: UpdateGameInput): Promise<void> => {
     return acc;
   }, {});
 
-  await updateDoc(doc(getDb(), 'games', id), {
+  await updateDoc(doc(getDb(), "games", id), {
     ...payload,
     updatedAt: serverTimestamp(),
   });
 };
 
 export const createSession = async (input: CreateSessionInput): Promise<string> => {
-  const ref = await addDoc(collection(getDb(), 'sessions'), {
+  const ref = await addDoc(collection(getDb(), "sessions"), {
     ...input,
     createdAt: serverTimestamp(),
   });
@@ -174,14 +177,18 @@ export const createSession = async (input: CreateSessionInput): Promise<string> 
 };
 
 export const subscribeToUserSessions = (uid: string, callback: (sessions: SessionLog[]) => void) => {
-  const q = query(firestoreRefs.sessions(), where('createdBy', '==', uid), orderBy('playedAt', 'desc'));
+  const q = query(
+    firestoreRefs.sessions(),
+    where("createdBy", "==", uid),
+    orderBy("playedAt", "desc"),
+  );
   return onSnapshot(q, (snapshot) => {
     callback(snapshot.docs.map((docSnapshot) => docSnapshot.data()));
   });
 };
 
 export const fetchUserProfile = async (uid: string): Promise<UserProfile | null> => {
-  const ref = doc(getDb(), 'users', uid).withConverter(profileConverter);
+  const ref = doc(getDb(), "users", uid).withConverter(profileConverter);
   const snapshot = await getDoc(ref);
   if (!snapshot.exists()) {
     return null;
@@ -189,6 +196,8 @@ export const fetchUserProfile = async (uid: string): Promise<UserProfile | null>
   return snapshot.data();
 };
 
-export const defaultGameQueryConstraints = (): QueryConstraint[] => [orderBy('createdAt', 'desc')];
+export const defaultGameQueryConstraints = (): QueryConstraint[] => [
+  orderBy("createdAt", "desc"),
+];
 
-// TODO: Firestore security rules aanscherpen voor users, games en sessions collecties.
+// TODO: Define Firestore security rules for users, games, and sessions collections.

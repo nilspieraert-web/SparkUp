@@ -2,16 +2,14 @@ import React from 'react';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
-import { DiscoverStackParamList, FavoritesStackParamList } from '../../navigation/types';
+import { DiscoverStackParamList } from '../../navigation/types';
 import { fetchGameById } from '../../services/firestore';
 import { ThemedText } from '../../components/ThemedText';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useTheme } from '../../contexts/ThemeContext';
 
-type DiscoverProps = NativeStackScreenProps<DiscoverStackParamList, 'GameDetail'>;
-type FavoritesProps = NativeStackScreenProps<FavoritesStackParamList, 'GameDetail'>;
-type Props = DiscoverProps | FavoritesProps;
+type Props = NativeStackScreenProps<DiscoverStackParamList, 'GameDetail'>;
 
 export const GameDetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const { gameId } = route.params;
@@ -43,13 +41,15 @@ export const GameDetailScreen: React.FC<Props> = ({ route, navigation }) => {
 
   return (
     <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {game.coverPhotoUrl ? <Image source={{ uri: game.coverPhotoUrl }} style={styles.cover} /> : null}
+      {game.coverPhotoUrl ? (
+        <Image source={{ uri: game.coverPhotoUrl }} style={styles.cover} />
+      ) : null}
       <View style={styles.content}>
         <ThemedText variant="heading" style={styles.title}>
           {game.title}
         </ThemedText>
         <ThemedText style={styles.meta}>
-          {game.theme} · {game.durationMins} mins · Ages {game.ageRange.min}-{game.ageRange.max}
+          {game.theme} • {game.durationMins} mins • Ages {game.ageRange.min}-{game.ageRange.max}
         </ThemedText>
         <ThemedText style={styles.description}>{game.description}</ThemedText>
         <View style={styles.buttonRow}>
@@ -61,7 +61,9 @@ export const GameDetailScreen: React.FC<Props> = ({ route, navigation }) => {
           <PrimaryButton
             label="Log session"
             onPress={() =>
-              navigation.getParent()?.navigate('LogStack', { screen: 'LogSession', params: { gameId: game.id } })
+              navigation
+                .getParent()
+                ?.navigate('LogStack', { screen: 'LogSession', params: { gameId: game.id } })
             }
             style={styles.flexButton}
           />

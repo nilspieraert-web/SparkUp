@@ -1,242 +1,190 @@
-import React from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Modal, Pressable, StyleSheet, View, FlatList } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { useQuery } from '@tanstack/react-query';
 import { LogStackParamList } from '../../navigation/types';
-import { ScreenContainer } from '../../components/ScreenContainer';
-import { ThemedText } from '../../components/ThemedText';
-import { PrimaryButton } from '../../components/PrimaryButton';
 import { FormTextField } from '../../components/forms/FormTextField';
+import { FormDateTimeField } from '../../components/forms/FormDateTimeField';
 import { FormSegmentedControl } from '../../components/forms/FormSegmentedControl';
 import { FormRatingGroup } from '../../components/forms/FormRatingGroup';
 import { FormSwitchField } from '../../components/forms/FormSwitchField';
-import { FormDateTimeField } from '../../components/forms/FormDateTimeField';
-import { createSession, defaultGameQueryConstraints, fetchGames } from '../../services/firestore';
+import { PrimaryButton } from '../../components/PrimaryButton';
+import { FUN_RATING_OPTIONS, ENGAGEMENT_RATING_OPTIONS } from '../../utils/constants';
+import { useGames } from '../../hooks/useGames';
+import { ThemedText } from '../../components/ThemedText';
+import { ScreenContainer } from '../../components/ScreenContainer';
+import { createSession } from '../../services/firestore';
 import { useAuth } from '../../hooks/useAuth';
-import { SessionContext } from '../../types/session';
-import { Game } from '../../types/game';
 import { useTheme } from '../../contexts/ThemeContext';
 
 type Props = NativeStackScreenProps<LogStackParamList, 'LogSession'>;
 
-interface LogSessionFormValues {
+interface LogSessionValues {
   gameId: string;
   playedAt: number;
-  context: SessionContext;
-  funRating: 1 | 2 | 3 | 4 | 5;
-  engagementRating: 1 | 2 | 3 | 4 | 5;
+  context: 'indoor' | 'outdoor';
+  funRating: number;
+  engagementRating: number;
   kidsAllJoined: boolean;
   notes: string;
 }
 
-const validationSchema = Yup.object<LogSessionFormValues>({
-  gameId: Yup.string().required('Kies een spel om te loggen'),
+const validationSchema = Yup.object<LogSessionValues>({
+  gameId: Yup.string().required('Select a game to log'),
   playedAt: Yup.number().required(),
-  context: Yup.mixed<SessionContext>().oneOf(['indoor', 'outdoor']).required(),
+  context: Yup.mixed<'indoor' | 'outdoor'>().oneOf(['indoor', 'outdoor']).required(),
   funRating: Yup.number().min(1).max(5).required(),
   engagementRating: Yup.number().min(1).max(5).required(),
   kidsAllJoined: Yup.boolean().required(),
-  notes: Yup.string().min(4, 'Een korte notitie helpt later').required('Notes zijn verplicht'),
+  notes: Yup.string().max(500, 'Try to keep notes concise'),
 });
 
-export const LogSessionScreen: React.FC<Props> = ({ navigation, route }) => {
+export const LogSessionScreen: React.FC<Props> = ({ route, navigation }) => {
+  const initialGameId = route.params?.gameId ?? '';
+  const { games } = useGames();
   const { user } = useAuth();
   const { theme } = useTheme();
-  const initialGameId = route.params?.gameId ?? '';
-  const { data: availableGames, isLoading: isGamesLoading, isError: hasGameFetchError } = useQuery<Game[]>({
-    queryKey: ['games', 'log-session'],
-    queryFn: async () => fetchGames(defaultGameQueryConstraints()),
-  });
-  const [isGamePickerOpen, setGamePickerOpen] = React.useState(false);
+  const [gamePickerVisible, setGamePickerVisible] = useState(false);
 
-  const initialValues: LogSessionFormValues = {
-    gameId: initialGameId,
-    playedAt: Date.now(),
-    context: 'indoor',
-    funRating: 3,
-    engagementRating: 3,
-    kidsAllJoined: false,
-    notes: '',
-  };
+  const selectedGame = useMemo(() => games.find((game) => game.id === initialGameId), [games, initialGameId]);
+  const initialValues = useMemo<LogSessionValues>(
+    () => ({
+      gameId: selectedGame?.id ?? '',
+      playedAt: Date.now(),
+      context: 'indoor',
+      funRating: 3,
+      engagementRating: 3,
+      kidsAllJoined: true,
+      notes: '',
+    }),
+    [selectedGame?.id],
+  );
+
+  if (!user) {
+    return (
+      <ScreenContainer>
+        <ThemedText>You need to be logged in to record sessions.</ThemedText>
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer scrollable>
-      <ThemedText variant="heading" style={styles.title}>
-        Log een sessie
-      </ThemedText>
-      <ThemedText style={styles.subtitle}>
-        Kies een spel en vul daarna je ervaring in zodat je later makkelijk kan terugvinden wat goed werkte.
-      </ThemedText>
-
-      <Formik<LogSessionFormValues>
+      <Formik<LogSessionValues>
+        enableReinitialize
         initialValues={initialValues}
         validationSchema={validationSchema}
         onSubmit={async (values, helpers) => {
-          if (!user) {
-            Alert.alert('Log in', 'Je moet ingelogd zijn om een sessie te loggen.');
-            return;
-          }
-
           try {
-            const id = await createSession({
-              ...values,
+            const newSessionId = await createSession({
               createdBy: user.id,
+              gameId: values.gameId,
+              playedAt: values.playedAt,
+              context: values.context,
+              funRating: values.funRating as 1 | 2 | 3 | 4 | 5,
+              engagementRating: values.engagementRating as 1 | 2 | 3 | 4 | 5,
+              kidsAllJoined: values.kidsAllJoined,
+              notes: values.notes,
             });
             helpers.setSubmitting(false);
-            navigation.navigate('SessionDetail', { sessionId: id });
+            navigation.navigate('SessionDetail', { sessionId: newSessionId });
           } catch (error) {
+            console.error('Failed to save session', error);
             helpers.setSubmitting(false);
-            Alert.alert('Opslaan mislukt', (error as Error).message);
           }
         }}
       >
-        {({ handleSubmit, isSubmitting, isValid, setFieldValue, values, errors }) => {
-          const games = availableGames ?? [];
-          const selectedGame = games.find((game) => game.id === values.gameId);
-
-          return (
+        {({ handleSubmit, isSubmitting, isValid, values, setFieldValue }) => (
           <View>
-            <ThemedText variant="subheading" style={styles.sectionTitle}>
-              Kies een spel
-            </ThemedText>
-            {isGamesLoading ? (
-              <ActivityIndicator style={styles.gameListLoading} />
-            ) : hasGameFetchError ? (
-              <ThemedText style={styles.errorText}>Kon games niet laden. Probeer opnieuw.</ThemedText>
-            ) : games.length === 0 ? (
-              <ThemedText>Er zijn nog geen games beschikbaar om te loggen.</ThemedText>
-            ) : (
-              <View>
-                <Pressable
-                  style={[
-                    styles.dropdownTrigger,
-                    {
-                      borderColor: theme.colors.border,
-                      backgroundColor: theme.colors.card,
-                    },
-                  ]}
-                  onPress={() => setGamePickerOpen((prev) => !prev)}
-                  accessibilityRole="button"
-                  accessibilityState={{ expanded: isGamePickerOpen }}
-                >
-                  <ThemedText numberOfLines={1}>
-                    {selectedGame ? selectedGame.title : 'Selecteer een spel'}
-                  </ThemedText>
-                  <ThemedText variant="caption" style={{ color: theme.colors.muted }}>
-                    {selectedGame ? `${selectedGame.theme} • ${selectedGame.durationMins} min` : 'Tik om lijst te openen'}
-                  </ThemedText>
-                </Pressable>
-                {isGamePickerOpen ? (
-                  <View style={[styles.dropdownList, { borderColor: theme.colors.border, backgroundColor: theme.colors.card }]}>
-                    {games.map((game) => {
-                      const isSelected = values.gameId === game.id;
-                      return (
-                        <Pressable
-                          key={game.id}
-                          onPress={() => {
-                            setFieldValue('gameId', game.id);
-                            setGamePickerOpen(false);
-                          }}
-                          style={[
-                            styles.gameOption,
-                            {
-                              borderColor: isSelected ? theme.colors.primary : theme.colors.border,
-                              backgroundColor: isSelected ? theme.colors.secondary : theme.colors.card,
-                            },
-                          ]}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected: isSelected }}
-                        >
-                          <ThemedText variant="subheading" numberOfLines={1}>
-                            {game.title}
-                          </ThemedText>
-                          <ThemedText variant="caption" style={{ color: theme.colors.muted }}>
-                            {game.theme} • {game.durationMins} min
-                          </ThemedText>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                ) : null}
-              </View>
-            )}
-            {errors.gameId ? (
-              <ThemedText variant="caption" style={[styles.errorText, styles.gameError]}>
-                {errors.gameId}
+            <Pressable
+              style={[styles.selectField, { borderColor: theme.colors.border }]}
+              onPress={() => setGamePickerVisible(true)}
+              accessibilityRole='button'
+            >
+              <ThemedText variant='subheading'>
+                {values.gameId
+                  ? games.find((game) => game.id === values.gameId)?.title ?? 'Select a game'
+                  : 'Select a game'}
               </ThemedText>
-            ) : null}
+            </Pressable>
 
-            <FormDateTimeField name="playedAt" label="Datum en tijd" mode="date" />
-
+            <FormDateTimeField name='playedAt' label='Played on' mode='date' />
             <FormSegmentedControl
-              name="context"
-              label="Context"
+              name='context'
+              label='Where did you play?'
               options={[
                 { label: 'Indoor', value: 'indoor' },
                 { label: 'Outdoor', value: 'outdoor' },
               ]}
             />
-
-            <FormRatingGroup name="funRating" label="Fun" options={[1, 2, 3, 4, 5]} />
-            <FormRatingGroup name="engagementRating" label="Engagement" options={[1, 2, 3, 4, 5]} />
-            <FormSwitchField name="kidsAllJoined" label="Iedereen deed mee" />
-
-            <FormTextField name="notes" label="Notities" placeholder="Wat werkte / wat niet?" multiline />
-
-            <PrimaryButton
-              label="Opslaan"
-              onPress={handleSubmit}
-              disabled={!isValid || isSubmitting}
-              style={styles.submitButton}
+            <FormRatingGroup name='funRating' label='Fun rating' options={FUN_RATING_OPTIONS} />
+            <FormRatingGroup name='engagementRating' label='Engagement rating' options={ENGAGEMENT_RATING_OPTIONS} />
+            <FormSwitchField name='kidsAllJoined' label='All youth participated' />
+            <FormTextField
+              name='notes'
+              label='Session notes'
+              placeholder='Anything worth remembering?'
+              multiline
             />
+
+            <PrimaryButton label='Save session' onPress={handleSubmit} disabled={!isValid || isSubmitting} />
+
+            <Modal visible={gamePickerVisible} animationType='slide'>
+              <View style={[styles.modalContainer, { backgroundColor: theme.colors.background }]}> 
+                <ThemedText variant='heading' style={styles.modalTitle}>
+                  Pick a game
+                </ThemedText>
+                <FlatList
+                  data={games}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <Pressable
+                      onPress={() => {
+                        setFieldValue('gameId', item.id);
+                        setGamePickerVisible(false);
+                      }}
+                      style={[styles.modalItem, { borderColor: theme.colors.border }]}
+                    >
+                      <ThemedText variant='subheading'>{item.title}</ThemedText>
+                      <ThemedText style={styles.modalItemMeta}>{item.theme}</ThemedText>
+                    </Pressable>
+                  )}
+                  ListEmptyComponent={<ThemedText style={styles.modalEmpty}>No games to pick yet. Create one first.</ThemedText>}
+                />
+                <PrimaryButton label='Close' onPress={() => setGamePickerVisible(false)} />
+              </View>
+            </Modal>
           </View>
-          );
-        }}
+        )}
       </Formik>
     </ScreenContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  title: {
-    marginBottom: 8,
-  },
-  subtitle: {
+  selectField: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     marginBottom: 16,
   },
-  sectionTitle: {
-    marginBottom: 8,
+  modalContainer: {
+    flex: 1,
+    padding: 24,
   },
-  gameListLoading: {
-    marginVertical: 12,
+  modalTitle: {
+    marginBottom: 16,
   },
-  dropdownTrigger: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
+  modalItem: {
+    paddingVertical: 14,
+    borderBottomWidth: 1,
   },
-  dropdownList: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 8,
-    marginBottom: 8,
+  modalItemMeta: {
+    opacity: 0.7,
   },
-  gameOption: {
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 8,
-  },
-  errorText: {
-    color: '#DC2626',
-  },
-  gameError: {
-    marginBottom: 8,
-  },
-  submitButton: {
-    marginTop: 8,
+  modalEmpty: {
+    marginTop: 32,
   },
 });

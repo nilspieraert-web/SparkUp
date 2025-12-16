@@ -10,7 +10,7 @@ export const LogNavigator: React.FC = () => {
   return (
     <Stack.Navigator>
       <Stack.Screen name="LogSession" component={LogSessionScreen} options={{ headerTitle: 'Log session' }} />
-      <Stack.Screen name="SessionDetail" component={SessionDetailScreen} options={{ headerTitle: 'Session detail' }} />
+      <Stack.Screen name="SessionDetail" component={SessionDetailScreen} options={{ headerTitle: 'Session details' }} />
     </Stack.Navigator>
   );
 };

@@ -1,7 +1,7 @@
-import { useEffect, useMemo } from 'react';
-import { useAppDispatch, useAppSelector } from './useRedux';
-import { toggleFavorite } from '../features/favorites/favoritesSlice';
-import { setBadgeCount } from '../features/ui/uiSlice';
+import { useEffect, useMemo } from "react";
+import { useAppDispatch, useAppSelector } from "./useRedux";
+import { toggleFavorite } from "../features/favorites/favoritesSlice";
+import { setBadgeCount } from "../features/ui/uiSlice";
 
 interface UseFavoritesResult {
   favoriteIds: string[];
@@ -14,7 +14,7 @@ export const useFavorites = (): UseFavoritesResult => {
   const favoriteIds = useAppSelector((state) => state.favorites.ids);
 
   useEffect(() => {
-    dispatch(setBadgeCount({ key: 'favorites', value: favoriteIds.length }));
+    dispatch(setBadgeCount({ key: "favorites", value: favoriteIds.length }));
   }, [dispatch, favoriteIds.length]);
 
   const toggle = (gameId: string) => {

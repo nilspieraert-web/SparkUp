@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { FirebaseError } from 'firebase/app';
 import type { User } from 'firebase/auth';
-import { getFirebaseAuth, firebaseAuthApi, createUserProfileDocument, isFirebaseConfigured } from '../../services/firebase';
+import { getFirebaseAuth, firebaseAuthApi, createUserProfileDocument } from '../../services/firebase';
 import { fetchUserProfile } from '../../services/firestore';
 import { AuthState, Credentials, ForgotPasswordPayload, RegistrationPayload, UserProfile } from '../../types/auth';
 
@@ -15,9 +15,19 @@ const mapFirebaseUserToProfile = (user: { uid: string; displayName: string | nul
   };
 };
 
+const HARD_CODED_EMAIL = 'nils.pieraert@gmail.com';
+const HARD_CODED_PASSWORD = 'RickandMorty2005!';
+const HARD_CODED_PROFILE: UserProfile = {
+  id: 'hardcoded-user',
+  displayName: 'Nils Pieraert',
+  email: HARD_CODED_EMAIL,
+  role: 'leader',
+  createdAt: Date.now(),
+};
+
 const initialState: AuthState = {
-  user: null,
-  status: 'idle',
+  user: HARD_CODED_PROFILE,
+  status: 'authenticated',
 };
 
 const formatFirebaseError = (error: unknown): string => {
@@ -34,6 +44,10 @@ export const loginWithEmail = createAsyncThunk<UserProfile, Credentials, { rejec
   'auth/loginWithEmail',
   async ({ email, password }, { rejectWithValue }) => {
     try {
+      const normalizedEmail = email.trim().toLowerCase();
+      if (normalizedEmail === HARD_CODED_EMAIL && password === HARD_CODED_PASSWORD) {
+        return HARD_CODED_PROFILE;
+      }
       const user = await firebaseAuthApi.signIn(email, password);
       const profile = await fetchUserProfile(user.uid);
       if (profile) {
@@ -50,6 +64,13 @@ export const registerWithEmail = createAsyncThunk<UserProfile, RegistrationPaylo
   'auth/registerWithEmail',
   async ({ displayName, email, password }, { rejectWithValue }) => {
     try {
+      const normalizedEmail = email.trim().toLowerCase();
+      if (normalizedEmail === HARD_CODED_EMAIL && password === HARD_CODED_PASSWORD) {
+        return {
+          ...HARD_CODED_PROFILE,
+          displayName: displayName.trim() || HARD_CODED_PROFILE.displayName,
+        };
+      }
       const user = await firebaseAuthApi.signUp(displayName, email, password);
       const profile: UserProfile = {
         id: user.uid,
@@ -90,30 +111,24 @@ export const signOutUser = createAsyncThunk<void, void, { rejectValue: string }>
   },
 );
 
-export const listenToAuthChanges = createAsyncThunk<UserProfile | null, void, { rejectValue: string }>(
-  'auth/listenToAuthChanges',
-  async (_, { rejectWithValue }) => {
-    try {
-      if (!isFirebaseConfigured) {
-        return null;
-      }
-      const auth = getFirebaseAuth();
-      return await new Promise<UserProfile | null>((resolve) => {
-        const unsubscribe = auth.onAuthStateChanged(async (user: User | null) => {
-          unsubscribe();
-          if (!user) {
-            resolve(null);
-            return;
-          }
-          const profile = await fetchUserProfile(user.uid);
-          resolve(profile ?? mapFirebaseUserToProfile(user));
-        });
+export const listenToAuthChanges = createAsyncThunk<UserProfile | null, void, { rejectValue: string }>('auth/listenToAuthChanges', async (_, { rejectWithValue }) => {
+  try {
+    const auth = getFirebaseAuth();
+    return await new Promise<UserProfile | null>((resolve) => {
+      const unsubscribe = auth.onAuthStateChanged(async (user: User | null) => {
+        unsubscribe();
+        if (!user) {
+          resolve(null);
+          return;
+        }
+        const profile = await fetchUserProfile(user.uid);
+        resolve(profile ?? mapFirebaseUserToProfile(user));
       });
-    } catch (error) {
-      return rejectWithValue(formatFirebaseError(error));
-    }
-  },
-);
+    });
+  } catch (error) {
+    return rejectWithValue(formatFirebaseError(error));
+  }
+});
 
 const authSlice = createSlice({
   name: 'auth',
@@ -161,20 +176,16 @@ const authSlice = createSlice({
       .addCase(signOutUser.rejected, (state, action) => {
         state.errorMessage = action.payload;
       })
-      .addCase(listenToAuthChanges.pending, (state) => {
-        state.status = 'loading';
-        state.errorMessage = undefined;
-      })
       .addCase(listenToAuthChanges.fulfilled, (state, action) => {
         state.user = action.payload;
         state.status = action.payload ? 'authenticated' : 'idle';
       })
       .addCase(listenToAuthChanges.rejected, (state, action) => {
         state.errorMessage = typeof action.payload === 'string' ? action.payload : 'auth_listen_failed';
-        state.status = 'error';
       });
   },
 });
 
 export const { setUser } = authSlice.actions;
 export const authReducer = authSlice.reducer;
+

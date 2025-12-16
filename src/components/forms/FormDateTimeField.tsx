@@ -48,14 +48,22 @@ export const FormDateTimeField: React.FC<FormDateTimeFieldProps> = ({ name, labe
       <ThemedText variant="subheading" style={styles.label}>
         {label}
       </ThemedText>
-      <Pressable onPress={openPicker} style={[styles.field, { borderColor: theme.colors.border }]} accessibilityRole="button">
+      <Pressable
+        onPress={openPicker}
+        style={[styles.field, { borderColor: theme.colors.border }]}
+        accessibilityRole="button"
+      >
         <ThemedText>{formattedValue}</ThemedText>
       </Pressable>
       {Platform.OS === 'ios' ? (
         <Modal transparent visible={iosVisible} animationType="slide">
           <View style={styles.modalBackdrop}>
             <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
-              <DateTimePicker value={new Date(field.value)} mode={mode} onChange={handleChange} />
+              <DateTimePicker
+                value={new Date(field.value)}
+                mode={mode}
+                onChange={handleChange}
+              />
               <Pressable onPress={() => setIosVisible(false)} style={styles.closeButton} accessibilityRole="button">
                 <ThemedText>Done</ThemedText>
               </Pressable>

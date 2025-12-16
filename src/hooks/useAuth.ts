@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from './useRedux';
 import { listenToAuthChanges } from '../features/auth/authSlice';
 
@@ -7,14 +7,11 @@ export const useAuth = () => {
   const user = useAppSelector((state) => state.auth.user);
   const status = useAppSelector((state) => state.auth.status);
   const errorMessage = useAppSelector((state) => state.auth.errorMessage);
-  const started = useRef(false);
 
   useEffect(() => {
-    if (started.current || status !== 'idle') {
-      return;
-    }
-    started.current = true;
+    if (status === 'idle') {
       void dispatch(listenToAuthChanges());
+    }
   }, [dispatch, status]);
 
   return {
