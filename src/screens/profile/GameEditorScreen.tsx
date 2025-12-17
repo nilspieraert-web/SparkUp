@@ -229,14 +229,12 @@ export const GameEditorScreen: React.FC<Props> = ({ route, navigation }) => {
               await updateGame({
                 id: gameId,
                 ...sharedPayload,
-                createdBy: user.id,
                 coverPhotoUrl,
               });
             } else {
               await createGame({
                 ...sharedPayload,
                 ...(coverPhotoUrl ? { coverPhotoUrl } : {}),
-                createdBy: user.id,
               });
             }
             void queryClient.invalidateQueries({ queryKey: ['games'] });

@@ -13,7 +13,7 @@ export type DiscoverStackParamList = {
 
 export type LogStackParamList = {
   LogSession: { gameId?: string } | undefined;
-  SessionDetail: { sessionId: string };
+  SessionDetail: { sessionId: string; gameId: string };
 };
 
 export type FavoritesStackParamList = {
@@ -38,6 +38,5 @@ export type RootDrawerParamList = {
   MyLogs: undefined;
   Help: undefined;
 };
-
 
 

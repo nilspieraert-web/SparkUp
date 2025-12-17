@@ -13,7 +13,7 @@ export interface Game {
   outdoorAllowed: boolean;
   description: string;
   coverPhotoUrl?: string | null;
-  createdBy: string;
+  createdByUid: string;
   createdAt: number;
   updatedAt: number;
 }

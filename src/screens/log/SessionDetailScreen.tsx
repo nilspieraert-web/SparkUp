@@ -10,17 +10,16 @@ import { ThemedText } from '../../components/ThemedText';
 type Props = NativeStackScreenProps<LogStackParamList, 'SessionDetail'>;
 
 export const SessionDetailScreen: React.FC<Props> = ({ route }) => {
-  const { sessionId } = route.params;
+  const { sessionId, gameId } = route.params;
 
   const { data: session, isLoading } = useQuery({
-    queryKey: ['session', sessionId],
-    queryFn: () => fetchSessionById(sessionId),
+    queryKey: ['session', gameId, sessionId],
+    queryFn: () => fetchSessionById(gameId, sessionId),
   });
 
   const { data: game } = useQuery({
-    enabled: Boolean(session?.gameId),
-    queryKey: ['game', session?.gameId],
-    queryFn: () => fetchGameById(session?.gameId ?? ''),
+    queryKey: ['game', gameId],
+    queryFn: () => fetchGameById(gameId),
   });
 
   if (isLoading) {

@@ -21,7 +21,12 @@ export const MyLogsScreen: React.FC<Props> = ({ navigation }) => {
         renderItem={({ item }) => (
           <SessionSummaryCard
             session={item}
-            onPress={() => navigation.navigate('Home', { screen: 'LogStack', params: { screen: 'SessionDetail', params: { sessionId: item.id } } })}
+            onPress={() =>
+              navigation.navigate('Home', {
+                screen: 'LogStack',
+                params: { screen: 'SessionDetail', params: { sessionId: item.id, gameId: item.gameId } },
+              })
+            }
           />
         )}
         ListEmptyComponent={

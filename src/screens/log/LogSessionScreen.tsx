@@ -78,7 +78,6 @@ export const LogSessionScreen: React.FC<Props> = ({ route, navigation }) => {
         onSubmit={async (values, helpers) => {
           try {
             const newSessionId = await createSession({
-              createdBy: user.id,
               gameId: values.gameId,
               playedAt: values.playedAt,
               context: values.context,
@@ -88,7 +87,7 @@ export const LogSessionScreen: React.FC<Props> = ({ route, navigation }) => {
               notes: values.notes,
             });
             helpers.setSubmitting(false);
-            navigation.navigate('SessionDetail', { sessionId: newSessionId });
+            navigation.navigate('SessionDetail', { sessionId: newSessionId, gameId: values.gameId });
           } catch (error) {
             console.error('Failed to save session', error);
             helpers.setSubmitting(false);

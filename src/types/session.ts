@@ -9,6 +9,6 @@ export interface SessionLog {
   engagementRating: 1 | 2 | 3 | 4 | 5;
   kidsAllJoined: boolean;
   notes: string;
-  createdBy: string;
+  loggedByUid: string;
   createdAt: number;
 }

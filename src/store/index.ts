@@ -11,11 +11,24 @@ const authPersistConfig = {
   key: 'auth',
   storage: AsyncStorage,
   whitelist: ['user'],
+  version: 1,
+  migrate: async (state: unknown) => {
+    if (!state || typeof state !== 'object') {
+      return state;
+    }
+    const maybeUser = (state as { user?: unknown }).user as { id?: string } | undefined;
+    if (maybeUser?.id === 'hardcoded-user') {
+      return { ...state, user: null };
+    }
+    return state;
+  },
 };
 
 const favoritesPersistConfig = {
   key: 'favorites',
   storage: AsyncStorage,
+  version: 1,
+  migrate: async () => ({ ids: [] }),
 };
 
 const filtersPersistConfig = {

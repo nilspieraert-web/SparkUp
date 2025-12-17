@@ -1,6 +1,8 @@
 import {
   addDoc,
   collection,
+  collectionGroup,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -8,6 +10,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where,
   QueryConstraint,
@@ -17,19 +20,26 @@ import {
 import { Game } from "../types/game";
 import { SessionLog } from "../types/session";
 import { UserProfile } from "../types/auth";
-import { getFirestoreDb } from "./firebase";
+import { getFirebaseAuth, getFirestoreDb } from "./firebase";
 
-export interface CreateGameInput extends Omit<Game, "id" | "createdAt" | "updatedAt" | "createdBy"> {
-  createdBy: string;
-}
+export type CreateGameInput = Omit<Game, "id" | "createdAt" | "updatedAt" | "createdByUid">;
 
 export interface UpdateGameInput extends Partial<CreateGameInput> {
   id: string;
 }
 
-export interface CreateSessionInput extends Omit<SessionLog, "id" | "createdAt"> {}
+export type CreateSessionInput = Omit<SessionLog, "id" | "createdAt" | "loggedByUid">;
 
 const getDb = () => getFirestoreDb();
+
+const requireAuthUid = () => {
+  const auth = getFirebaseAuth();
+  const uid = auth.currentUser?.uid;
+  if (!uid) {
+    throw new Error("User must be signed in to perform this action.");
+  }
+  return uid;
+};
 
 type FirestoreTimestampLike = { toMillis?: () => number };
 
@@ -59,7 +69,7 @@ const gameConverter: FirestoreDataConverter<Game> = {
       outdoorAllowed: Boolean(data.outdoorAllowed),
       description: (data.description as string) ?? "",
       coverPhotoUrl: data.coverPhotoUrl as string | null | undefined,
-      createdBy: data.createdBy as string,
+      createdByUid: (data.createdByUid as string) ?? (data.createdBy as string) ?? "",
       createdAt: normalizeTimestamp((data as { createdAt?: unknown }).createdAt),
       updatedAt: normalizeTimestamp((data as { updatedAt?: unknown }).updatedAt),
     } satisfies Game;
@@ -81,7 +91,7 @@ const sessionConverter: FirestoreDataConverter<SessionLog> = {
       engagementRating: (data.engagementRating as SessionLog["engagementRating"]) ?? 3,
       kidsAllJoined: Boolean(data.kidsAllJoined),
       notes: (data.notes as string) ?? "",
-      createdBy: data.createdBy as string,
+      loggedByUid: (data.loggedByUid as string) ?? (data.createdBy as string) ?? "",
       createdAt: normalizeTimestamp((data as { createdAt?: unknown }).createdAt),
     } satisfies SessionLog;
   },
@@ -106,8 +116,11 @@ const profileConverter: FirestoreDataConverter<UserProfile> = {
 
 export const firestoreRefs = {
   games: () => collection(getDb(), "games").withConverter(gameConverter),
-  sessions: () => collection(getDb(), "sessions").withConverter(sessionConverter),
+  logsForGame: (gameId: string) =>
+    collection(getDb(), "games", gameId, "logs").withConverter(sessionConverter),
+  logsCollectionGroup: () => collectionGroup(getDb(), "logs").withConverter(sessionConverter),
   users: () => collection(getDb(), "users").withConverter(profileConverter),
+  favorites: (uid: string) => collection(getDb(), "users", uid, "favorites"),
 };
 
 export const subscribeToGames = (
@@ -135,8 +148,9 @@ export const fetchGameById = async (gameId: string): Promise<Game | null> => {
   return snapshot.data();
 };
 
-export const fetchSessionById = async (sessionId: string): Promise<SessionLog | null> => {
-  const ref = doc(getDb(), "sessions", sessionId).withConverter(sessionConverter);
+export const fetchSessionById = async (gameId: string, sessionId: string): Promise<SessionLog | null> => {
+  requireAuthUid();
+  const ref = doc(getDb(), "games", gameId, "logs", sessionId).withConverter(sessionConverter);
   const snapshot = await getDoc(ref);
   if (!snapshot.exists()) {
     return null;
@@ -145,8 +159,10 @@ export const fetchSessionById = async (sessionId: string): Promise<SessionLog | 
 };
 
 export const createGame = async (input: CreateGameInput): Promise<string> => {
+  const uid = requireAuthUid();
   const ref = await addDoc(collection(getDb(), "games"), {
     ...input,
+    createdByUid: uid,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -154,6 +170,7 @@ export const createGame = async (input: CreateGameInput): Promise<string> => {
 };
 
 export const updateGame = async (input: UpdateGameInput): Promise<void> => {
+  requireAuthUid();
   const { id, ...rest } = input;
   const payload = Object.entries(rest).reduce<Record<string, unknown>>((acc, [key, value]) => {
     if (value !== undefined) {
@@ -169,8 +186,10 @@ export const updateGame = async (input: UpdateGameInput): Promise<void> => {
 };
 
 export const createSession = async (input: CreateSessionInput): Promise<string> => {
-  const ref = await addDoc(collection(getDb(), "sessions"), {
+  const uid = requireAuthUid();
+  const ref = await addDoc(collection(getDb(), "games", input.gameId, "logs"), {
     ...input,
+    loggedByUid: uid,
     createdAt: serverTimestamp(),
   });
   return ref.id;
@@ -178,8 +197,8 @@ export const createSession = async (input: CreateSessionInput): Promise<string> 
 
 export const subscribeToUserSessions = (uid: string, callback: (sessions: SessionLog[]) => void) => {
   const q = query(
-    firestoreRefs.sessions(),
-    where("createdBy", "==", uid),
+    firestoreRefs.logsCollectionGroup(),
+    where("loggedByUid", "==", uid),
     orderBy("playedAt", "desc"),
   );
   return onSnapshot(q, (snapshot) => {
@@ -200,4 +219,49 @@ export const defaultGameQueryConstraints = (): QueryConstraint[] => [
   orderBy("createdAt", "desc"),
 ];
 
-// TODO: Define Firestore security rules for users, games, and sessions collections.
+export const subscribeToFavorites = (uid: string, callback: (favoriteIds: string[]) => void) => {
+  const authUid = requireAuthUid();
+  if (authUid !== uid) {
+    throw new Error("Cannot subscribe to another user's favorites.");
+  }
+  return onSnapshot(firestoreRefs.favorites(uid), (snapshot) => {
+    callback(snapshot.docs.map((docSnapshot) => docSnapshot.id));
+  });
+};
+
+export const addFavoriteGame = async (gameId: string): Promise<void> => {
+  const uid = requireAuthUid();
+  const ref = doc(getDb(), "users", uid, "favorites", gameId);
+  await setDoc(ref, { createdAt: serverTimestamp() }, { merge: true });
+};
+
+export const removeFavoriteGame = async (gameId: string): Promise<void> => {
+  const uid = requireAuthUid();
+  const ref = doc(getDb(), "users", uid, "favorites", gameId);
+  await deleteDoc(ref);
+};
+
+export interface GameRatings {
+  averageFun: number | null;
+  averageEngagement: number | null;
+}
+
+export const fetchGameRatings = async (gameId: string): Promise<GameRatings> => {
+  const snapshot = await getDocs(firestoreRefs.logsForGame(gameId));
+  if (snapshot.empty) {
+    return { averageFun: null, averageEngagement: null };
+  }
+  let funTotal = 0;
+  let engagementTotal = 0;
+  let count = 0;
+  snapshot.forEach((docSnapshot) => {
+    const data = docSnapshot.data();
+    funTotal += data.funRating;
+    engagementTotal += data.engagementRating;
+    count += 1;
+  });
+  return {
+    averageFun: Number((funTotal / count).toFixed(1)),
+    averageEngagement: Number((engagementTotal / count).toFixed(1)),
+  };
+};

@@ -15,19 +15,9 @@ const mapFirebaseUserToProfile = (user: { uid: string; displayName: string | nul
   };
 };
 
-const HARD_CODED_EMAIL = 'nils.pieraert@gmail.com';
-const HARD_CODED_PASSWORD = 'RickandMorty2005!';
-const HARD_CODED_PROFILE: UserProfile = {
-  id: 'hardcoded-user',
-  displayName: 'Nils Pieraert',
-  email: HARD_CODED_EMAIL,
-  role: 'leader',
-  createdAt: Date.now(),
-};
-
 const initialState: AuthState = {
-  user: HARD_CODED_PROFILE,
-  status: 'authenticated',
+  user: null,
+  status: 'idle',
 };
 
 const formatFirebaseError = (error: unknown): string => {
@@ -44,10 +34,6 @@ export const loginWithEmail = createAsyncThunk<UserProfile, Credentials, { rejec
   'auth/loginWithEmail',
   async ({ email, password }, { rejectWithValue }) => {
     try {
-      const normalizedEmail = email.trim().toLowerCase();
-      if (normalizedEmail === HARD_CODED_EMAIL && password === HARD_CODED_PASSWORD) {
-        return HARD_CODED_PROFILE;
-      }
       const user = await firebaseAuthApi.signIn(email, password);
       const profile = await fetchUserProfile(user.uid);
       if (profile) {
@@ -64,13 +50,6 @@ export const registerWithEmail = createAsyncThunk<UserProfile, RegistrationPaylo
   'auth/registerWithEmail',
   async ({ displayName, email, password }, { rejectWithValue }) => {
     try {
-      const normalizedEmail = email.trim().toLowerCase();
-      if (normalizedEmail === HARD_CODED_EMAIL && password === HARD_CODED_PASSWORD) {
-        return {
-          ...HARD_CODED_PROFILE,
-          displayName: displayName.trim() || HARD_CODED_PROFILE.displayName,
-        };
-      }
       const user = await firebaseAuthApi.signUp(displayName, email, password);
       const profile: UserProfile = {
         id: user.uid,
@@ -188,4 +167,3 @@ const authSlice = createSlice({
 
 export const { setUser } = authSlice.actions;
 export const authReducer = authSlice.reducer;
-
