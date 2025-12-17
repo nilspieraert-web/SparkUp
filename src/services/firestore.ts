@@ -241,6 +241,7 @@ export const removeFavoriteGame = async (gameId: string): Promise<void> => {
   await deleteDoc(ref);
 };
 
+
 export interface GameRatings {
   averageFun: number | null;
   averageEngagement: number | null;
