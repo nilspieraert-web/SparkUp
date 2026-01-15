@@ -11,7 +11,7 @@ import { ThemedText } from '../../components/ThemedText';
 import { FormTextField } from '../../components/forms/FormTextField';
 import { FormSwitchField } from '../../components/forms/FormSwitchField';
 import { PrimaryButton } from '../../components/PrimaryButton';
-import { THEMES } from '../../../utils/constants';
+import { THEMES } from '../../utils/constants';
 import { createGame, fetchGameById, updateGame } from '../../services/firestore';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../contexts/ThemeContext';

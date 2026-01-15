@@ -1,5 +1,6 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View, Text as RNText, TextInput as RNTextInput } from 'react-native';
+import type { TextStyle } from 'react-native';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -28,8 +29,8 @@ const Root: React.FC = () => {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { Text, TextInput } = require('react-native') as { Text: any; TextInput: any };
+    const Text = RNText as typeof RNText & { defaultProps?: { style?: TextStyle } };
+    const TextInput = RNTextInput as typeof RNTextInput & { defaultProps?: { style?: TextStyle } };
 
     if (Text.defaultProps == null) {
       Text.defaultProps = {};

@@ -10,7 +10,7 @@ import { FormSegmentedControl } from '../../components/forms/FormSegmentedContro
 import { FormRatingGroup } from '../../components/forms/FormRatingGroup';
 import { FormSwitchField } from '../../components/forms/FormSwitchField';
 import { PrimaryButton } from '../../components/PrimaryButton';
-import { FUN_RATING_OPTIONS, ENGAGEMENT_RATING_OPTIONS } from '../../../utils/constants';
+import { FUN_RATING_OPTIONS, ENGAGEMENT_RATING_OPTIONS } from '../../utils/constants';
 import { useGames } from '../../hooks/useGames';
 import { ThemedText } from '../../components/ThemedText';
 import { ScreenContainer } from '../../components/ScreenContainer';
