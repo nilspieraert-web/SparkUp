@@ -17,19 +17,23 @@ export const FormDateTimeField: React.FC<FormDateTimeFieldProps> = ({ name, labe
   const [iosVisible, setIosVisible] = useState<boolean>(false);
 
   const handleChange = useCallback(
-    (_event: DateTimePickerEvent, date?: Date) => {
+    (event: DateTimePickerEvent, date?: Date) => {
+      if (event.type === 'dismissed') {
+        if (Platform.OS === 'ios') {
+          setIosVisible(false);
+        }
+        return;
+      }
       if (date) {
         helpers.setValue(date.getTime());
-      }
-      if (Platform.OS === 'ios') {
-        setIosVisible(false);
       }
     },
     [helpers],
   );
 
   const openPicker = useCallback(() => {
-    const currentDate = new Date(field.value);
+    const safeValue = Number.isFinite(field.value) ? field.value : Date.now();
+    const currentDate = new Date(safeValue);
     if (Platform.OS === 'android') {
       DateTimePickerAndroid.open({
         value: currentDate,
@@ -41,7 +45,7 @@ export const FormDateTimeField: React.FC<FormDateTimeFieldProps> = ({ name, labe
     }
   }, [field.value, handleChange, mode]);
 
-  const formattedValue = new Date(field.value).toLocaleString();
+  const formattedValue = new Date(Number.isFinite(field.value) ? field.value : Date.now()).toLocaleString();
 
   return (
     <View style={styles.container}>
@@ -56,11 +60,16 @@ export const FormDateTimeField: React.FC<FormDateTimeFieldProps> = ({ name, labe
         <ThemedText>{formattedValue}</ThemedText>
       </Pressable>
       {Platform.OS === 'ios' ? (
-        <Modal transparent visible={iosVisible} animationType="slide">
+        <Modal
+          transparent
+          visible={iosVisible}
+          animationType="slide"
+          onRequestClose={() => setIosVisible(false)}
+        >
           <View style={styles.modalBackdrop}>
             <View style={[styles.modalContent, { backgroundColor: theme.colors.card }]}>
               <DateTimePicker
-                value={new Date(field.value)}
+                value={new Date(Number.isFinite(field.value) ? field.value : Date.now())}
                 mode={mode}
                 onChange={handleChange}
               />

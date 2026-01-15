@@ -199,7 +199,6 @@ export const subscribeToUserSessions = (uid: string, callback: (sessions: Sessio
   const q = query(
     firestoreRefs.logsCollectionGroup(),
     where("loggedByUid", "==", uid),
-    orderBy("playedAt", "desc"),
   );
   return onSnapshot(q, (snapshot) => {
     callback(snapshot.docs.map((docSnapshot) => docSnapshot.data()));
